@@ -1,12 +1,15 @@
 import re
 import os
+import numpy
+import cv2
+import skimage
 
 path_to_pic = 'Path to file(tip c:\\folder\): '
 name_pic = 'File name (tip name.jpg): '
-continue_arg = 'Do you want set command? (tip y/n): '
-arg1 = 'Apply Command1(tip 1): '
-arg2 = 'Apply Command2(tip 2): '
-arg3 = 'Apply Command3(tip 3): '
+continue_arg = 'Do you want see command? (tip y/n): '
+arg1 = 'View info [size and layers]' #del
+arg2 = 'Apply Command2' #del
+arg3 = 'Apply Command3'#del
 path = 0
 name = 0
 contin = 0
@@ -22,6 +25,10 @@ list_of_arg = path_to_pic, name_pic, continue_arg, arg1, arg2, arg3
 list_of_name = [path, name, contin, arg11, arg22, arg33]
 
 
+def viewinf(needinfo):
+    print(skimage.io.imread(needinfo).shape)
+
+
 def check_path(paramtr):  # Now we checking correct path
     if paramtr[-1:] == chr(92):
         return True
@@ -30,8 +37,8 @@ def check_path(paramtr):  # Now we checking correct path
 
 
 def check_pic(paramtr):  # Checking correct filename *.jpg
-    d = re.findall(r'\.\w\w\w\b', paramtr)
-    if d == ['.jpg']:
+    d = paramtr[-4:]
+    if d == '.jpg' or d == '.bmp' or d == '.png':
         return True
     else:
         return False
@@ -42,7 +49,24 @@ def check_fullp(paramtr):  # The picture is real? return true\false
 
 
 def which_arg(paramtr):
-    pass
+    param = paramtr
+    print('''Choose parametr:
+    1 - View Info (Size And Layers)
+    2 - 2nd
+    3 - 3th
+    4 - 4
+    5 - 5
+    6 - 6''')
+    choose = input('1, 2, 3, 4, 5, 6: ')
+    if choose == '1':
+        viewinf(param)
+        #return
+    elif choose == '2':
+        pass
+    elif choose == '3':
+        pass
+    else:
+        print('error, you must input only 1-6 number')
 
 
 # main code
@@ -68,19 +92,27 @@ if __name__ == '__main__':
                 x -= 1
                 continue
 
-        if x == 2:  # Ask User what he's want do with picture
+        if x >= 2:  # Ask User what he's want do with picture
             if list_of_name[x] == 'y':  # now show him commands
-                pass
+                which_arg(full_path)
+                x -= 1
             elif list_of_name[x] == 'n':  # he's want nothing
                 print('thats all, bye')
                 break
             else:  # error, enter again
                 print('error, you must input only y or n')
                 x -= 1
-        if x == 3:  # some work arg1
-            pass
-        if x == 4:  # some work arg2
-            pass
-        if x == 5:  # some work arg3
-            pass
+
+        # if x >= 3:  # some work arg1
+        #    if list_of_name[x] == 'y':
+        #        print(which_arg(full_path))
+        #    elif list_of_name[x] == 'n':  # he's want nothing
+        #        x -= 1
+        #    else:
+        #        print('error, you must input only y or n')
+        #        x -= 1
         x += 1
+#        if x == 4:  # some work arg2
+#           pass
+#      if x == 5:  # some work arg3
+#         pass
