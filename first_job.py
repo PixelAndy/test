@@ -4,8 +4,8 @@ import numpy
 import cv2
 import skimage
 
-path_to_pic = 'Path to file(tip c:\\folder\): '
-name_pic = 'File name (tip name.jpg): '
+path_to_pic = 'Path to file(tip \'c:\\folder\\\'): '
+name_pic = 'File name (tip \'name.jpg\'): '
 continue_arg = 'Do you want see command? (tip y/n): '
 arg1 = 'View info [size and layers]'  # del
 arg2 = 'Apply Command2'  # del
@@ -30,14 +30,14 @@ def viewinf(needinfo):  # Read info picture, size and
     print('Hight = ' + str(x[0]) + ' pxls\nWidth = ' + str(x[1]) + ' pxls\nLayers = ' + str(x[2]))
 
 
-def rgb_hsv():
+def rgb_hsv(): # check pixel RGB or HVS
     pass
 
-def convert_color2gray(param):
+def convert_color2gray(param): # Try convert color picture to gray color
     orig_pic = skimage.io.imread(param)
     conv2gray = skimage.color.rgb2gray(orig_pic)
     m = skimage.io.imread(param).shape
-    skimage.io.imsave('c:\\gray_pic.jpg', m)
+    skimage.io.imsave(conv2gray, m)
 
 
 
@@ -66,8 +66,8 @@ def which_arg(paramtr):  # I think no need to comment this)
     1 - View Info (Size And Layers)
     2 - Check PixeL is RGB or HSV
     3 - Convert pic to gray color
-    4 - 4
-    5 - 5
+    4 - in progress
+    5 - in progress
     6 - 6...''')
     choose = input('From 1 to 6: ')
     if choose == '1':
