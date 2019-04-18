@@ -3,42 +3,24 @@ import os
 import numpy
 import cv2
 import skimage
-
-path_to_pic = 'Path to file(tip \'c:\\folder\\\'): '
-name_pic = 'File name (tip \'name.jpg\'): '
-continue_arg = 'Do you want see command? (tip y/n): '
-arg1 = 'View info [size and layers]'  # del
-arg2 = 'Apply Command2'  # del
-arg3 = 'Apply Command3'  # del
-path = 0
-name = 0
-contin = 0
-arg11 = 0
-arg22 = 0
-arg33 = 0
-x = 0
-full_path = ''
-
-# make typle Questions - Answers.
-list_of_arg = path_to_pic, name_pic, continue_arg, arg1, arg2, arg3
-# make list of name arguments
-list_of_name = [path, name, contin, arg11, arg22, arg33]
+import sys
 
 
 def viewinf(needinfo):  # Read info picture, size and
     x = skimage.io.imread(needinfo).shape
-    print('Hight = ' + str(x[0]) + ' pxls\nWidth = ' + str(x[1]) + ' pxls\nLayers = ' + str(x[2]))
+    n_layer = x[2] if len(x) > 2 else 1
+    print('Hight = ' + str(x[0]) + ' pxls\nWidth = ' + str(x[1]) + ' pxls\nLayers = ' + str(n_layer))
 
 
-def rgb_hsv(): # check pixel RGB or HVS
+def rgb_hsv():  # check pixel RGB or HVS
     pass
 
-def convert_color2gray(param): # Try convert color picture to gray color
+
+def convert_color2gray(param):  # Try convert color picture to gray color
     orig_pic = skimage.io.imread(param)
     conv2gray = skimage.color.rgb2gray(orig_pic)
-    m = skimage.io.imread(param).shape
-    skimage.io.imsave(conv2gray, m)
-
+    m = orig_pic.shape
+    skimage.io.imsave(param, conv2gray, check_contrastbool=False)
 
 
 def check_path(paramtr):  # Now we checking correct path
@@ -82,8 +64,33 @@ def which_arg(paramtr):  # I think no need to comment this)
 
 # main code
 if __name__ == '__main__':
+
+    path_to_pic = 'Path to file(tip \'c:\\folder\\\'): '
+    name_pic = 'File name (tip \'name.jpg\'): '
+    continue_arg = 'Do you want see command? (tip y/n): '
+    arg1 = 'View info [size and layers]'  # del
+    arg2 = 'Apply Command2'  # del
+    arg3 = 'Apply Command3'  # del
+    path = 0
+    name = 0
+    contin = 0
+    arg11 = 0
+    arg22 = 0
+    arg33 = 0
+    x = 0
+    full_path = ''
+
+    # make typle Questions - Answers.
+    list_of_arg = path_to_pic, name_pic, continue_arg, arg1, arg2, arg3
+    # make list of name arguments
+    list_of_name = [path, name, contin, arg11, arg22, arg33]
+
+    argv = sys.argv[1:]
+
     while x < len(list_of_arg):
-        list_of_name[x] = input(list_of_arg[x])
+
+        # list_of_name[x] = input(list_of_arg[x])
+        list_of_name[x] = argv[x]
 
         if x == 0:  # User input path to file
             if check_path(list_of_name[x]) == False:
