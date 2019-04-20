@@ -7,7 +7,7 @@ import sys
 import argparse
 
 
-def helpinfo():
+def helpinfo(error):
     print('''
     How to usage!
     
@@ -23,7 +23,9 @@ def helpinfo():
     mo    - (morf_op) - morfologic operations
     bp    - (bin_pic) - binary picture
     sgt   - (segment) - segmentation picture
-    ''')
+    
+    Problem: {}
+    '''.format(error))
     sys.exit()
 
 
@@ -36,11 +38,11 @@ def infoByPixel(pic, point):  # view info in adress of picture
             ymax = pic.shape[1]
             x = int(z[0])
             y = int(z[1])
-            print(data[x][y]) if 0 < x < xmax and 0 < y < ymax else print('out of value')
+            print(data[x][y]) if 0 < x < xmax and 0 < y < ymax else helpinfo('out of value in ibp')
         else:
-            print('wrong value in ibp')
+            helpinfo('wrong value in ibp')
     else:
-        print('wrong value in ibp')
+        helpinfo('wrong value in ibp')
 
 
 def color2gray(pic, name, path):  # Try convert color picture to gray color
@@ -53,7 +55,8 @@ def color2gray(pic, name, path):  # Try convert color picture to gray color
 def check_path(paath):  # Now we checking correct path, correct extension and existence file
     p = paath[-4:]
     file_ok = os.path.exists(paath)
-    return True if (p == '.jpg' or p == '.bmp' or p == '.png') and file_ok == True else helpinfo()
+    return True if (p == '.jpg' or p == '.bmp' or p == '.png') and file_ok == True else helpinfo(
+        'File not found or wrong extension')
 
 
 def viewinfo(needinfo):  # Read info picture, size and layers
@@ -80,37 +83,37 @@ def segmentat():
 
 def parser_arguments(list, c):  # checking path and after than if ok use argument
     fullpath = list[1][5:]
-    if list[1][:5] == 'path=' and check_path(fullpath) == True:
+    if list[1][:5] == 'path=' and (len(fullpath)) > 7 and check_path(fullpath):
         data_pic = skimage.io.imread(fullpath)
-        for countarg in range(2, c):
-            if list[countarg] == 'ni':
+        for count_arg in range(2, c):
+            if list[count_arg] == 'ni':
                 viewinfo(data_pic)
                 continue
-            elif list[countarg][:4] == 'c2g=':
-                color2gray(data_pic, list[countarg][4:], fullpath)
+            elif list[count_arg][:4] == 'c2g=':
+                color2gray(data_pic, list[count_arg][4:], fullpath)
                 continue
-            elif list[countarg] == 'h':
-                helpinfo()
+            elif list[count_arg] == 'h':
+                helpinfo('no problem')
                 break
-            elif list[countarg][:4] == 'ibp=':
-                infoByPixel(data_pic, list[countarg][4:])
+            elif list[count_arg][:4] == 'ibp=':
+                infoByPixel(data_pic, list[count_arg][4:])
                 continue
-            elif list[countarg] == 'htg':
+            elif list[count_arg] == 'htg':
                 histogr()
                 continue
-            elif list[countarg] == 'mo':
+            elif list[count_arg] == 'mo':
                 morf_op()
                 continue
-            elif list[countarg] == 'bp':
+            elif list[count_arg] == 'bp':
                 bin_pic()
                 continue
-            elif list[countarg] == 'sgt':
+            elif list[count_arg] == 'sgt':
                 segmentat()
                 continue
             else:
-                helpinfo()
+                helpinfo('wrong argument')
     else:
-        helpinfo()
+        helpinfo('wrong path or file not found')
 
 
 if __name__ == '__main__':
@@ -118,4 +121,4 @@ if __name__ == '__main__':
     list_argum = sys.argv
 
     # ckecking for correct count arguments if not enough go read help
-    helpinfo() if count_argum <= 2 else parser_arguments(list_argum, count_argum)
+    helpinfo('need more arguments') if count_argum <= 2 else parser_arguments(list_argum, count_argum)
