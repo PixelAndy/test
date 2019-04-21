@@ -32,15 +32,12 @@ def helpinfo(error):
 def infoByPixel(pic, point):  # view info in adress of picture
     z = point.split(':')
     data = np.array(pic)
-    if len(z) == 2:
-        if z[0].isdigit() and z[1].isdigit():
-            xmax = pic.shape[0]
-            ymax = pic.shape[1]
-            x = int(z[0])
-            y = int(z[1])
-            print(data[x][y]) if 0 < x < xmax and 0 < y < ymax else helpinfo('out of value in ibp')
-        else:
-            helpinfo('wrong value in ibp')
+    if len(z) == 2 and z[0].isdigit() and z[1].isdigit():
+        xmax = pic.shape[0]
+        ymax = pic.shape[1]
+        x = int(z[0])
+        y = int(z[1])
+        print(data[x][y]) if 0 < x < xmax and 0 < y < ymax else helpinfo('out of value in ibp')
     else:
         helpinfo('wrong value in ibp')
 
