@@ -1,42 +1,40 @@
-import re
+from matplotlib import pyplot as plt
 import os
 import numpy as np
-import cv2
 import skimage
 import sys
-import argparse
 
 
 def helpinfo(error):
     print('''
     How to usage!
     
-    Example: pic.py path=c:\\folder\\someName.jpg ni ibp=10:5 c2g=name
+    Example: pic.py path=c:\\folder\\someName.jpg info ibp=10:5 c2g=name
     
     Full list of arguments:
     path= - (path=c:\\f\\n.jpg) - !!!must be 1st argument!!!, set path
-    ni    - view width, height and count layers
-    c2g   - (c2g=name) - converting picture to gray color, set new name for gray picture
-    h     - view help message
-    ibp   - (ibp=1:1) - view info in set pixel x:y
-    htg   - (histogr) - make histogram picture
-    mo    - (morf_op) - morfologic operations
-    bp    - (bin_pic) - binary picture
-    sgt   - (segment) - segmentation picture
+    info  - view width, height and count layers
+    c2g=  - (c2g=name) - converting picture to gray color, set new name for gray picture
+    help  - view help message
+    ibp=  - (ibp=1:1) - view info in set pixel x:y
+    hstg  - (histogr) - make histogram picture
+    mopt  - (morf_op) - morfologic operations
+    bpic  - (bin_pic) - binary picture
+    segt  - (segment) - segmentation picture
     
     Problem: {}
     '''.format(error))
     sys.exit()
 
 
-def infoByPixel(pic, point):  # view info in adress of picture
-    z = point.split(':')
+def infoByPixel(pic, points):  # view info in adress of picture
+    adrs = points.split(':')
     data = np.array(pic)
-    if len(z) == 2 and z[0].isdigit() and z[1].isdigit():
+    if len(adrs) == 2 and adrs[0].isdigit() and adrs[1].isdigit():
         xmax = pic.shape[0]
         ymax = pic.shape[1]
-        x = int(z[0])
-        y = int(z[1])
+        x = int(adrs[0])
+        y = int(adrs[1])
         print(data[x][y]) if 0 < x < xmax and 0 < y < ymax else helpinfo('out of value in ibp')
     else:
         helpinfo('wrong value in ibp')
@@ -45,21 +43,25 @@ def infoByPixel(pic, point):  # view info in adress of picture
 def color2gray(pic, name, path):  # Try convert color picture to gray color
     conv2gray = skimage.color.rgb2gray(pic)
     dirPath = os.path.dirname(path)
-    save = os.path.join(dirPath, name + path[-4:])
+    print(os.path.splitext(path))
+    ext = os.path.splitext(path)[1]
+    save = os.path.join(dirPath, name + ext)
     skimage.io.imsave(save, conv2gray, check_contrastbool=False)
 
 
-def check_path(paath):  # Now we checking correct path, correct extension and existence file
-    p = paath[-4:]
-    file_ok = os.path.exists(paath)
-    return True if (p == '.jpg' or p == '.bmp' or p == '.png') and file_ok == True else helpinfo(
+def check_path(path):  # Now we checking correct path, correct extension and existence file
+    ext = os.path.splitext(path)[1]
+    file_ok = os.path.exists(path)
+    return True if (ext == '.jpg' or ext == '.bmp' or ext == '.png') and file_ok == True else helpinfo(
         'File not found or wrong extension')
 
 
 def viewinfo(needinfo):  # Read info picture, size and layers
     x = needinfo.shape
-    n_layer = x[2] if len(x) > 2 else 1
-    print('Hight = {} pxls\nWidth = {} pxls\nLayers = {}'.format(*x))
+    if len(x) > 2:
+        print('Hight = {} pxls\nWidth = {} pxls\nLayers = {}'.format(*x))
+    else:
+        print('Hight = {} pxls\nWidth = {} pxls\nLayers = {}'.format(x[0],x[1],1))
 
 
 def histogr():
@@ -78,33 +80,33 @@ def segmentat():
     pass
 
 
-def parser_arguments(list, c):  # checking path and after than if ok use argument
-    fullpath = list[1][5:]
-    if list[1][:5] == 'path=' and (len(fullpath)) > 7 and check_path(fullpath):
+def parser_arguments(all_arguments):  # checking path and after than if ok use argument
+    fullpath = all_arguments[1][5:]
+    if all_arguments[1][:5] == 'path=' and (len(fullpath)) > 7 and check_path(fullpath):
         data_pic = skimage.io.imread(fullpath)
-        for count_arg in range(2, c):
-            if list[count_arg] == 'ni':
+        max_iteration = len(all_arguments)
+        for count_arg in range(2, max_iteration):
+            if all_arguments[count_arg] == 'info':
                 viewinfo(data_pic)
                 continue
-            elif list[count_arg][:4] == 'c2g=':
-                color2gray(data_pic, list[count_arg][4:], fullpath)
+            elif all_arguments[count_arg][:4] == 'c2g=':
+                color2gray(data_pic, all_arguments[count_arg][4:], fullpath)
                 continue
-            elif list[count_arg] == 'h':
+            elif all_arguments[count_arg] == 'help':
                 helpinfo('no problem')
-                break
-            elif list[count_arg][:4] == 'ibp=':
-                infoByPixel(data_pic, list[count_arg][4:])
+            elif all_arguments[count_arg][:4] == 'ibp=':
+                infoByPixel(data_pic, all_arguments[count_arg][4:])
                 continue
-            elif list[count_arg] == 'htg':
+            elif all_arguments[count_arg] == 'hstg':
                 histogr()
                 continue
-            elif list[count_arg] == 'mo':
+            elif all_arguments[count_arg] == 'mopt':
                 morf_op()
                 continue
-            elif list[count_arg] == 'bp':
+            elif all_arguments[count_arg] == 'bpic':
                 bin_pic()
                 continue
-            elif list[count_arg] == 'sgt':
+            elif all_arguments[count_arg] == 'segt':
                 segmentat()
                 continue
             else:
@@ -114,8 +116,6 @@ def parser_arguments(list, c):  # checking path and after than if ok use argumen
 
 
 if __name__ == '__main__':
-    count_argum = len(sys.argv)
     list_argum = sys.argv
-
     # ckecking for correct count arguments if not enough go read help
-    helpinfo('need more arguments') if count_argum <= 2 else parser_arguments(list_argum, count_argum)
+    helpinfo('need more arguments') if len(list_argum) <= 2 else parser_arguments(list_argum)
