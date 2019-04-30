@@ -43,7 +43,6 @@ def infoByPixel(pic, points):  # view info in adress of picture
 def color2gray(pic, name, path):  # Try convert color picture to gray color
     conv2gray = skimage.color.rgb2gray(pic)
     dirPath = os.path.dirname(path)
-    print(os.path.splitext(path))
     ext = os.path.splitext(path)[1]
     save = os.path.join(dirPath, name + ext)
     skimage.io.imsave(save, conv2gray, check_contrastbool=False)
@@ -61,11 +60,16 @@ def viewinfo(needinfo):  # Read info picture, size and layers
     if len(x) > 2:
         print('Hight = {} pxls\nWidth = {} pxls\nLayers = {}'.format(*x))
     else:
-        print('Hight = {} pxls\nWidth = {} pxls\nLayers = {}'.format(x[0],x[1],1))
+        print('Hight = {} pxls\nWidth = {} pxls\nLayers = 1'.format(*x))
 
 
-def histogr():
-    pass
+def histogr(pictr):
+    if len(pictr.shape)> 2:
+       pictr = skimage.color.rgb2gray(pictr)
+    eqw_pic = skimage.exposure.equalize_hist(pictr)
+    plt.imshow(eqw_pic, cmap="gray")
+    plt.show()
+
 
 
 def morf_op():
@@ -92,13 +96,11 @@ def parser_arguments(all_arguments):  # checking path and after than if ok use a
             elif all_arguments[count_arg][:4] == 'c2g=':
                 color2gray(data_pic, all_arguments[count_arg][4:], fullpath)
                 continue
-            elif all_arguments[count_arg] == 'help':
-                helpinfo('no problem')
             elif all_arguments[count_arg][:4] == 'ibp=':
                 infoByPixel(data_pic, all_arguments[count_arg][4:])
                 continue
             elif all_arguments[count_arg] == 'hstg':
-                histogr()
+                histogr(data_pic)
                 continue
             elif all_arguments[count_arg] == 'mopt':
                 morf_op()
@@ -109,6 +111,8 @@ def parser_arguments(all_arguments):  # checking path and after than if ok use a
             elif all_arguments[count_arg] == 'segt':
                 segmentat()
                 continue
+            elif all_arguments[count_arg] == 'help':
+                helpinfo('no problem')
             else:
                 helpinfo('wrong argument')
     else:
