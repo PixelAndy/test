@@ -116,7 +116,7 @@ def parser_arguments(all_arguments):  # checking path and after than if ok use a
             else:
                 helpinfo('wrong argument')
     else:
-        helpinfo('wrong path or file not found')
+        helpinfo('wrong path, argument or file not found')
 
 
 if __name__ == '__main__':
