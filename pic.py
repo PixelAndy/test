@@ -1,7 +1,14 @@
 from matplotlib import pyplot as plt
 import os
+from os.path import dirname, splitext, join, exists
 import numpy as np
-import skimage
+from skimage import io, segmentation
+from skimage.util import img_as_ubyte
+from skimage.future import graph
+from skimage.exposure import equalize_hist
+from skimage.color import rgb2gray, label2rgb
+from skimage.morphology import erosion, disk
+from skimage.filters import try_all_threshold
 import sys
 
 
@@ -41,16 +48,16 @@ def infoByPixel(pic, points):  # view info in adress of picture
 
 
 def color2gray(pic, name, path):  # Try convert color picture to gray color
-    conv2gray = skimage.color.rgb2gray(pic)
-    dirPath = os.path.dirname(path)
-    ext = os.path.splitext(path)[1]
-    save = os.path.join(dirPath, name + ext)
-    skimage.io.imsave(save, conv2gray, check_contrastbool=False)
+    conv2gray = rgb2gray(pic)
+    dirPath = dirname(path)
+    ext = splitext(path)[1]
+    save = join(dirPath, name + ext)
+    io.imsave(save, conv2gray, check_contrastbool=False)
 
 
 def check_path(path):  # Now we checking correct path, correct extension and existence file
-    ext = os.path.splitext(path)[1]
-    file_ok = os.path.exists(path)
+    ext = splitext(path)[1]
+    file_ok = exists(path)
     return True if (ext == '.jpg' or ext == '.bmp' or ext == '.png') and file_ok == True else helpinfo(
         'File not found or wrong extension')
 
@@ -64,30 +71,42 @@ def viewinfo(needinfo):  # Read info picture, size and layers
 
 
 def histogr(pictr):
-    if len(pictr.shape)> 2:
-       pictr = skimage.color.rgb2gray(pictr)
-    eqw_pic = skimage.exposure.equalize_hist(pictr)
+    if len(pictr.shape) > 2:
+        pictr = rgb2gray(pictr)
+    eqw_pic = equalize_hist(pictr)
     plt.imshow(eqw_pic, cmap="gray")
     plt.show()
 
 
+def morf_op(pic):
+    pic_gray = rgb2gray(pic)
+    pic_u = img_as_ubyte(pic_gray)
+    selem = disk(10)
+    eroded = erosion(pic_u, selem)
+    plt.imshow(eroded, cmap='gray')
+    plt.show()
 
-def morf_op():
-    pass
+
+def bin_pic(pic):
+    pic_gray = rgb2gray(pic)
+    fig, ax = try_all_threshold(pic_gray, figsize=(5, 10), verbose=False)
+    plt.show()
 
 
-def bin_pic():
-    pass
-
-
-def segmentat():
-    pass
-
+def segmentat(pic):
+    labels1 = segmentation.slic(pic, compactness=30, n_segments=400)
+    out1 = label2rgb(labels1, pic, kind='avg')
+    g = graph.rag_mean_color(pic, labels1)
+    plt.imshow(out1)
+   # labels2 = graph.cut_threshold(labels1, g, 29)
+   # out2 = label2rgb(labels2, pic, kind='avg')
+   # plt.imshow(out2)
+    plt.show()
 
 def parser_arguments(all_arguments):  # checking path and after than if ok use argument
     fullpath = all_arguments[1][5:]
     if all_arguments[1][:5] == 'path=' and (len(fullpath)) > 7 and check_path(fullpath):
-        data_pic = skimage.io.imread(fullpath)
+        data_pic = io.imread(fullpath)
         max_iteration = len(all_arguments)
         for count_arg in range(2, max_iteration):
             if all_arguments[count_arg] == 'info':
@@ -103,13 +122,13 @@ def parser_arguments(all_arguments):  # checking path and after than if ok use a
                 histogr(data_pic)
                 continue
             elif all_arguments[count_arg] == 'mopt':
-                morf_op()
+                morf_op(data_pic)
                 continue
             elif all_arguments[count_arg] == 'bpic':
-                bin_pic()
+                bin_pic(data_pic)
                 continue
             elif all_arguments[count_arg] == 'segt':
-                segmentat()
+                segmentat(data_pic)
                 continue
             elif all_arguments[count_arg] == 'help':
                 helpinfo('no problem')
