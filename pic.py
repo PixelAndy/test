@@ -47,6 +47,9 @@ def infoByPixel(pic, points):  # view info in adress of picture
 
 
 def color2gray(pic, name, path):  # Try convert color picture to gray color
+    if len(pic.shape) == 2:
+        print('picture already gray')
+        return
     conv2gray = rgb2gray(pic)
     dirPath = dirname(path)
     ext = splitext(path)[1]
@@ -69,26 +72,28 @@ def viewinfo(needinfo):  # Read info picture, size and layers
         print('Hight = {} pxls\nWidth = {} pxls\nLayers = 1'.format(*x))
 
 
-def histogr(pictr):
-    if len(pictr.shape) > 2:
-        pictr = rgb2gray(pictr)
-    eqw_pic = equalize_hist(pictr)
+def histogr(pic):
+    if len(pic.shape) > 2:
+        pic = rgb2gray(pic)
+    eqw_pic = equalize_hist(pic)
     plt.imshow(eqw_pic, cmap="gray")
     plt.show()
 
 
 def morf_op(pic):
-    pic_gray = rgb2gray(pic)
-    pic_u = img_as_ubyte(pic_gray)
+    if len(pic.shape) > 2:
+        pic = rgb2gray(pic)
+    pic = img_as_ubyte(pic)
     selem = disk(10)
-    eroded = erosion(pic_u, selem)
+    eroded = erosion(pic, selem)
     plt.imshow(eroded, cmap='gray')
     plt.show()
 
 
 def bin_pic(pic):
-    pic_gray = rgb2gray(pic)
-    fig, ax = try_all_threshold(pic_gray, figsize=(5, 10), verbose=False)
+    if len(pic.shape) > 2:
+        pic = rgb2gray(pic)
+    fig, ax = try_all_threshold(pic, figsize=(5, 10), verbose=False)
     plt.show()
 
 
