@@ -1,12 +1,11 @@
 from matplotlib import pyplot as plt
-import os
 from os.path import dirname, splitext, join, exists
 import numpy as np
 from skimage import io, segmentation
 from skimage.util import img_as_ubyte
 from skimage.future import graph
 from skimage.exposure import equalize_hist
-from skimage.color import rgb2gray, label2rgb
+from skimage.color import rgb2gray, label2rgb, rgba2rgb
 from skimage.morphology import erosion, disk
 from skimage.filters import try_all_threshold
 import sys
@@ -52,7 +51,7 @@ def color2gray(pic, name, path):  # Try convert color picture to gray color
     dirPath = dirname(path)
     ext = splitext(path)[1]
     save = join(dirPath, name + ext)
-    io.imsave(save, conv2gray, check_contrastbool=False)
+    io.imsave(save, conv2gray, check_contrastbool=False) if ext != '.png' else io.imsave(save, conv2gray)
 
 
 def check_path(path):  # Now we checking correct path, correct extension and existence file
@@ -94,14 +93,20 @@ def bin_pic(pic):
 
 
 def segmentat(pic):
-    labels1 = segmentation.slic(pic, compactness=30, n_segments=400)
-    out1 = label2rgb(labels1, pic, kind='avg')
-    g = graph.rag_mean_color(pic, labels1)
+    if pic.shape[2] == 4: #if picture contain alpha channel
+        pic_wo_alph = pic[:, :, :3] #delete alpha
+    else:
+        pic_wo_alph = pic
+    labels1 = segmentation.slic(pic_wo_alph, compactness=30, n_segments=400)
+    out1 = label2rgb(labels1, pic_wo_alph, kind='avg')
+    g = graph.rag_mean_color(pic_wo_alph, labels1)
     plt.imshow(out1)
-   # labels2 = graph.cut_threshold(labels1, g, 29)
-   # out2 = label2rgb(labels2, pic, kind='avg')
-   # plt.imshow(out2)
     plt.show()
+    labels2 = graph.cut_threshold(labels1, g, 29)
+    out2 = label2rgb(labels2, pic_wo_alph, kind='avg')
+    plt.imshow(out2)
+    plt.show()
+
 
 def parser_arguments(all_arguments):  # checking path and after than if ok use argument
     fullpath = all_arguments[1][5:]
