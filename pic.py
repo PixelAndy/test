@@ -58,8 +58,8 @@ def color2gray(pic, name, path):  # Try convert color picture to gray color
 
 
 def check_path(path):  # Now we checking correct path, correct extension and existence file
-    ext = splitext(path)[1]
     file_ok = exists(path)
+    ext = splitext(path)[1]
     return True if (ext == '.jpg' or ext == '.bmp' or ext == '.png') and file_ok == True else helpinfo(
         'File not found or wrong extension')
 
@@ -83,9 +83,9 @@ def histogr(pic):
 def morf_op(pic):
     if len(pic.shape) > 2:
         pic = rgb2gray(pic)
-    pic = img_as_ubyte(pic)
+    pic_ubyte = img_as_ubyte(pic)
     selem = disk(10)
-    eroded = erosion(pic, selem)
+    eroded = erosion(pic_ubyte, selem)
     plt.imshow(eroded, cmap='gray')
     plt.show()
 
@@ -98,8 +98,10 @@ def bin_pic(pic):
 
 
 def segmentat(pic):
-    if pic.shape[2] == 4: #if picture contain alpha channel
-        pic_wo_alph = pic[:, :, :3] #delete alpha
+    # if picture not in gray scale (if == 2 then - picture in grayscale and no need check next condition)
+    # and if contain alpha channel
+    if (len(pic.shape) != 2) and (pic.shape[2] == 4):
+        pic_wo_alph = pic[:, :, :3] # delete alpha
     else:
         pic_wo_alph = pic
     labels1 = segmentation.slic(pic_wo_alph, compactness=30, n_segments=400)
