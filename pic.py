@@ -1,17 +1,17 @@
 from matplotlib import pyplot as plt
-from os.path import dirname, splitext, join, exists
+from os.path import dirname, splitext, join
 import numpy as np
+import sys
 import argparse
-from skimage import io, segmentation, draw
+from skimage import io, segmentation
 from skimage.util import img_as_ubyte
 from skimage.future import graph
 from skimage.exposure import equalize_hist
 from skimage.color import rgb2gray, label2rgb
-from skimage.morphology import erosion, disk
-from skimage.filters import (try_all_threshold, threshold_otsu, threshold_yen,
+from skimage.morphology import erosion, disk, dilation, opening, closing, white_tophat, black_tophat
+from skimage.filters import (threshold_otsu, threshold_yen,
                              threshold_isodata, threshold_li, threshold_mean,
                              threshold_minimum, threshold_triangle, sobel)
-import sys
 
 
 def Main():
@@ -55,7 +55,7 @@ def Main():
             what_to_do[key](**kwargs)
             do_something = True
 
-    if args.c2g != None:  # example args.info args.bpic
+    if args.c2g != None:
         color2gray(**kwargs)
         do_something = True
     if args.ibp != None:
@@ -128,10 +128,19 @@ def histogr(pic, **kwargs):
 def morf_op(pic, **kwargs):
     if len(pic.shape) > 2:
         pic = rgb2gray(pic)
+    fig, ax = plt.subplots(2, 4, figsize=(7, 8))
+    ax = ax.ravel()
     pic_ubyte = img_as_ubyte(pic)
+    operations = [pic, erosion, dilation, opening, closing, white_tophat, black_tophat]
+    titles = ['original', 'erosion', 'dilation', 'opening', 'closing', 'white tophat', 'black tophat']
     selem = disk(6)
-    eroded = erosion(pic_ubyte, selem)
-    plt.imshow(eroded, cmap='gray')
+    c = 0
+    for op in operations:
+        ax[c].imshow(op(pic_ubyte, selem), cmap='gray') if c != 0 else ax[c].imshow(pic_ubyte, cmap='gray')
+        ax[c].set_title(titles[c])
+        ax[c].axis('off')
+        c += 1
+    ax[7].axis('off')
     plt.show()
 
 
@@ -140,11 +149,9 @@ def bin_pic(pic, **kwargs):
         pic = rgb2gray(pic)
     fig, ax = plt.subplots(2, 4, figsize=(7, 8))
     ax = ax.ravel()
-    thresholds = [img_as_ubyte, threshold_minimum, threshold_triangle, threshold_mean,
-                  threshold_li, threshold_yen, threshold_otsu, threshold_isodata]
+    thresholds = th = pic_th = [img_as_ubyte, threshold_minimum, threshold_triangle, threshold_mean,
+                                threshold_li, threshold_yen, threshold_otsu, threshold_isodata]
     s_title = ['original', 'minimum', 'triangle', 'mean', 'li', 'yen', 'otsu', 'isodata']
-    th = thresholds[:]
-    pic_th = thresholds[:]
     tr = 0
     for threshold in thresholds:
         th[tr] = threshold(pic)
