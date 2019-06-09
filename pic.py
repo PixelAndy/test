@@ -149,20 +149,17 @@ def bin_pic(pic, **kwargs):
         pic = rgb2gray(pic)
     fig, ax = plt.subplots(2, 4, figsize=(7, 8))
     ax = ax.ravel()
-    thresholds = th = pic_th = [img_as_ubyte, threshold_minimum, threshold_triangle, threshold_mean,
-                                threshold_li, threshold_yen, threshold_otsu, threshold_isodata]
+    thresholds = [threshold_minimum, threshold_triangle, threshold_mean,
+                  threshold_li, threshold_yen, threshold_otsu, threshold_isodata]
+    tr_img = [pic]
+    for img in thresholds:
+        img_ = img(pic)
+        tr_img.append(pic > img_)
     s_title = ['original', 'minimum', 'triangle', 'mean', 'li', 'yen', 'otsu', 'isodata']
     tr = 0
-    for threshold in thresholds:
-        th[tr] = threshold(pic)
-
-        if tr != 0:
-            pic_th[tr] = pic > th[tr]
-        else:
-            pic_th[tr] = pic
-
-        ax[tr].imshow(pic_th[tr], cmap='gray')
-        ax[tr].set_title(s_title[tr])
+    for ttle in s_title:
+        ax[tr].imshow(tr_img[tr], cmap='gray')
+        ax[tr].set_title(ttle)
         ax[tr].axis('off')
         tr += 1
     plt.show()
