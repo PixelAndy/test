@@ -6,9 +6,10 @@ import sys
 from cv2 import imread, imwrite, COLOR_BGR2GRAY, cvtColor, equalizeHist
 from cv2 import erode, dilate, MORPH_OPEN, MORPH_CLOSE, MORPH_TOPHAT
 from cv2 import MORPH_BLACKHAT, MORPH_GRADIENT, morphologyEx, ADAPTIVE_THRESH_MEAN_C
-from cv2 import threshold, THRESH_BINARY, THRESH_BINARY_INV, THRESH_TRUNC
+from cv2 import threshold, THRESH_BINARY, THRESH_BINARY_INV, THRESH_TRUNC, THRESH_OTSU
 from cv2 import THRESH_TOZERO, THRESH_TOZERO_INV, ADAPTIVE_THRESH_GAUSSIAN_C
-from cv2 import adaptiveThreshold
+from cv2 import adaptiveThreshold, COLOR_BGR2HSV, bitwise_and, ximgproc, bitwise_not
+import cv2
 
 
 def Main():
@@ -133,7 +134,7 @@ def morf_op(pic, **kwargs):
     img.append(dilate(pic, kernel, iterations=1))
     mor = [MORPH_OPEN, MORPH_CLOSE, MORPH_TOPHAT, MORPH_BLACKHAT, MORPH_GRADIENT]
     for m in mor:
-        img.append(morphologyEx(pic,m,kernel))
+        img.append(morphologyEx(pic, m, kernel))
     titles = ['original', 'erosion', 'dilation', 'opening', 'closing', 'white tophat', 'black tophat', 'gradient']
     c = 0
     for image in img:
@@ -167,55 +168,62 @@ def bin_pic(pic, **kwargs):
     plt.show()
 
 
-
 def segmentat(pic, **kwargs):
-    # if (len(pic.shape) != 2) and (pic.shape[2] == 4):
-    #     pic_wo_alph = pic[:, :, :3]  # delete alpha
-    # else:
-    #     pic_wo_alph = pic
-
-    # RAG1, RAG2 = RAG_Thresholding(pic_wo_alph)
-    # rand_w = seg_random_walker(pic_wo_alph)
-
-    img = img_as_ubyte(pic_wo_alph[::2, ::2])
-
-    segments_fz = segmentation.felzenszwalb(img, scale=100, sigma=0.5, min_size=50)
-    segments_slic = segmentation.slic(img, n_segments=250, compactness=10, sigma=1)
-    segments_quick = segmentation.quickshift(img, kernel_size=3, max_dist=6, ratio=0.5)
-    gradient = sobel(rgb2gray(img))
-    segments_watershed = segmentation.watershed(gradient, markers=250, compactness=0.001)
-
-    fig, ax = plt.subplots(2, 4, figsize=(7, 8))
+    orig_pic = cvtColor(pic, cv2.COLOR_BGR2RGB)
+    converted_img = cvtColor(pic, COLOR_BGR2HSV)
+    result = [orig_pic]
+    region_size = 50
+    ruler = 20
+    num_superpixels = 400
+    num_iterations = 5
+    prior = 2
+    num_levels = 4
+    num_hist_bins = 5
+    height, width, channels = converted_img.shape
+    SL = [0, ximgproc.SLIC, ximgproc.SLICO, ximgproc.MSLIC]
+    for s in SL:
+        if s == 0:
+            seeds = ximgproc.createSuperpixelSEEDS(width, height, channels, num_superpixels, num_levels, prior,
+                                                   num_hist_bins)
+            seeds.iterate(converted_img, num_iterations)
+            mask = seeds.getLabelContourMask(False)
+        else:
+            slic = ximgproc.createSuperpixelSLIC(converted_img, s, region_size, ruler)
+            slic.iterate(num_iterations)
+            mask = slic.getLabelContourMask(False)
+        color_img = np.zeros(converted_img.shape, np.uint8)
+        color_img[:] = (0, 0, 255)
+        mask_inv = bitwise_not(mask)
+        result_bg = bitwise_and(pic, pic, mask=mask_inv)
+        result_fg = bitwise_and(color_img, color_img, mask=mask)
+        result_ = cv2.add(result_bg, result_fg)
+        result.append(result_)
+    fig, ax = plt.subplots(2, 3, figsize=(6, 6))
     ax = ax.ravel()
-    segmentations = [pic_wo_alph, RAG1, RAG2, rand_w, segments_fz, segments_slic, segments_quick, segments_watershed]
-    titles = ['original', 'R A G 1', 'R A G 2', 'Random Walker', 'Felzenszwalb', 'Slic', 'Quick', 'Watershed']
+    result.append(w_shed(pic))
+    titles = ['original', 'SEEDS', 'SLIC', 'SLICO', 'MSLIC', 'Watershed']
     c = 0
-    for segmen in segmentations:
-        ax[c].imshow(segmentation.mark_boundaries(img, segmen)) if c > 3 else ax[c].imshow(segmen)
+    for segmen in result:
+        ax[c].imshow(segmen)
         ax[c].set_title(titles[c])
         ax[c].axis('off')
         c += 1
     plt.show()
 
-#
-# def RAG_Thresholding(pic):
-#     labels1 = segmentation.slic(pic, compactness=30, n_segments=400)
-#     out1 = label2rgb(labels1, pic, kind='avg')
-#     g = graph.rag_mean_color(pic, labels1)
-#     labels2 = graph.cut_threshold(labels1, g, 29)
-#     out2 = label2rgb(labels2, pic, kind='avg')
-#     return out1, out2
-#
-#
-# def seg_random_walker(pic):
-#     pic_wo_alph = img_as_ubyte(pic)
-#     markers = np.zeros(pic_wo_alph.shape, dtype=np.uint8)
-#     markers[pic_wo_alph < 250] = 1
-#     markers[pic_wo_alph > 150] = 2
-#     labels = segmentation.random_walker(pic_wo_alph, markers)
-#     out = label2rgb(labels, pic_wo_alph, kind='avg')
-#     return out
 
+def w_shed(pic):
+    gray = cvtColor(pic, COLOR_BGR2GRAY)
+    ret, thresh = threshold(gray, 0, 255, THRESH_BINARY + THRESH_OTSU)
+    fg = erode(thresh, None, iterations=2)
+    bgt = dilate(thresh, None, iterations=3)
+    ret, bg = threshold(bgt, 1, 128, 1)
+    marker = cv2.add(fg, bg)
+    marker32 = np.int32(marker)
+    cv2.watershed(pic, marker32)
+    m = cv2.convertScaleAbs(marker32)
+    ret, thresh = threshold(m, 0, 255, THRESH_BINARY + THRESH_OTSU)
+    res = bitwise_and(pic, pic, mask=thresh)
+    return res
 
 
 def check_path(path):
